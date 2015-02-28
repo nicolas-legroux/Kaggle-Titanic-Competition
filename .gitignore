@@ -1,1 +1,3 @@
-titanic.png
+*.png
+*.csv
+*.pyc
