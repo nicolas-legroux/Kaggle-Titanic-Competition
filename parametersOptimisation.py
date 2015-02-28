@@ -1,4 +1,7 @@
 import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.grid_search import GridSearchCV
+from sklearn.grid_search import RandomizedSearchCV
 
 def report(grid_scores, n_top=5):
     params = None
