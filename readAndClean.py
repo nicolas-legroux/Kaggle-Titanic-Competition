@@ -39,6 +39,7 @@ def getTitle(name):
         return matchObj.group(2)    
     else:    
         return ""
+        
 
 def getDeck(ticketNumber):    
     matchObj = re.match(r'^([A-Z])', ticketNumber,re.IGNORECASE)     
@@ -46,6 +47,14 @@ def getDeck(ticketNumber):
         return matchObj.group(1)    
     else:    
         return ""
+        
+def testGG(IDiii, IDlist):
+    if (IDiii in IDlist):
+        return 1
+    else:
+        return 0
+                
+
         
 def getData():
     #Open the csv train file
@@ -89,7 +98,7 @@ def getData():
             median_ages[i,j] = data[(data['Gender'] == i) & \
                                   (data['Pclass'] == j+1)]['Age'].dropna().median()
     
-    data['AgeIsNull'] = pd.isnull(data.Age)
+    data['AgeIsNull'] = pd.isnull(data.Age).astype(int)
     
     #Compute ages when it is missing
     for i in range(2):
@@ -149,7 +158,7 @@ def getData():
     data["Deck"] = data["Cabin"].apply(lambda ticket: getDeck(ticket))
     data["Deck"] = data["Deck"].replace("T", "Z")    
     decks = pd.get_dummies(data['Deck']).rename(columns=lambda x: 'Deck_' + str(x))
-    
+
     data['Deck'] = data['Deck'].map({'A':0, 'B':1, 'C':2, 'D':3, 'E':4, 'F':5, 'G':6, 'Z':7})
     data = pd.concat([data, decks], axis=1)
     
@@ -167,10 +176,35 @@ def getData():
     
     data = data.drop(['Name', 'Sex', 'Cabin', 'Embarked', 'Ticket'], axis=1)
     
-    labels=['PassengerId', 'Survived', 'Gender', 'Title', 'Title_Mrs', 'Title_Miss', 'Title_Master', 'Title_Mr', 'Pclass', 'Fare', 
-    'Age', 'AgeIsNull', 'StartingPort',  'Parch', 
-    'SibSp', 'Deck_A', 'Deck_B', 
-     'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F', 'Deck_G', 'Deck_Z', 'Deck', 'Room', 'GroupCount', 'GroupID', 'FamilySize', 'Surname']
+    shouldHaveSurvivedButDiedGroupID = pd.Series(data[(((data.Gender == 0) & (data.Survived == 0)) | ((data.Title == 2) & (data.Survived == 0) & (data.Age<12))) & ((data.GroupCount>1) | (data.FamilySize>1))]["GroupID"]).unique()
+    shouldHaveSurvivedButDiedGroupID = shouldHaveSurvivedButDiedGroupID[shouldHaveSurvivedButDiedGroupID != 0]
+    shouldHaveSurvivedButDiedFamilyID = pd.Series(data[(((data.Gender == 0) & (data.Survived == 0)) | ((data.Title == 2) & (data.Survived == 0) & (data.Age<12))) & ((data.GroupCount>1) | (data.FamilySize>1))]["Surname"]).unique()
+    
+    
+    shouldHaveDiedButSurvivedGroupID = (pd.Series(data[((data.Title == 3) & (data.Survived == 1) & (data.Age>18)) & ((data.GroupCount>1) | (data.FamilySize>1))]['GroupID'])).unique()
+    shouldHaveDiedButSurvivedFamilyID = (pd.Series(data[((data.Title == 3) & (data.Survived == 1) & (data.Age>18)) & ((data.GroupCount>1) | (data.FamilySize>1))]['Surname'])).unique()
+    shouldHaveDiedButSurvivedGroupID = shouldHaveDiedButSurvivedGroupID[shouldHaveDiedButSurvivedGroupID != 0]
+    
+    data["HasFamilyOrFriendThatShouldHaveSurvivedFamily"] = 0
+    data["HasFamilyOrFriendThatShouldHaveSurvivedFamily"] = data["Surname"].apply(lambda IDiii : testGG(IDiii.astype(int), shouldHaveSurvivedButDiedFamilyID))
+    
+    data["HasFamilyOrFriendThatShouldHaveSurvivedGroup"] = 0
+    data["HasFamilyOrFriendThatShouldHaveSurvivedGroup"] = data["GroupID"].apply(lambda IDiii : testGG(IDiii.astype(int), shouldHaveSurvivedButDiedGroupID))
+    
+    data["FamilyDied"] = 0
+    data.loc[(data.HasFamilyOrFriendThatShouldHaveSurvivedFamily == 1) | (data.HasFamilyOrFriendThatShouldHaveSurvivedGroup == 1), "FamilyDied"] = 1
+    
+    data["HasFamilyOrFriendThatShouldHaveDiedFamily"] = 0
+    data["HasFamilyOrFriendThatShouldHaveDiedFamily"] = data["Surname"].apply(lambda IDiii : testGG(IDiii.astype(int), shouldHaveDiedButSurvivedFamilyID))
+    
+    data["HasFamilyOrFriendThatShouldHaveDiedGroup"] = 0
+    data["HasFamilyOrFriendThatShouldHaveDiedGroup"] = data["GroupID"].apply(lambda IDiii : testGG(IDiii.astype(int), shouldHaveDiedButSurvivedGroupID))
+    
+    data["FamilySurvived"] = 0
+    data.loc[(data.HasFamilyOrFriendThatShouldHaveDiedFamily == 1) | (data.HasFamilyOrFriendThatShouldHaveDiedGroup == 1), "FamilySurvived"] = 1
+    
+    labels=['PassengerId', 'Survived', 'Title', 'Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F', 
+    'Deck_G', 'Deck_Z', 'Deck', 'Room', 'Pclass', 'GroupCount', 'FamilySize', 'FamilyDied', 'FamilySurvived']
     
     data = data[labels]  
    
@@ -184,6 +218,3 @@ def getData():
 
 d, b, c, data = getData()
 
-    
-    
-   
