@@ -49,9 +49,9 @@ def getDeck(ticketNumber):
 def getData():
     #Open the csv train file
     
-    data = pd.read_csv('train.csv', header=0)
+    data = pd.read_csv('Data/train.csv', header=0)
     
-    test_data = pd.read_csv('test.csv', header=0)
+    test_data = pd.read_csv('Data/test.csv', header=0)
     data = data.append(test_data)
     
     #Set 'Gender'=0 for women and 1 for men
