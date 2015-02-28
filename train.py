@@ -15,17 +15,20 @@ from sklearn.ensemble import GradientBoostingClassifier
 import Features
 import StringIO
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.learning_curve import learning_curve
 from sklearn import tree
 import pydot
 import parametersOptimisation
+import matplotlib.pyplot as plt
+import learningCurve
 
 random.seed()
 
-#Choose a classifier
-classifier = DecisionTreeClassifier(max_depth=3)
+#Choose a classifie
+classifier = RandomForestClassifier(n_estimators=500, max_depth=3)
 
 #Get Data
-train_data, test_data, labels = readAndClean.getData()
+train_data, test_data, labels, data = readAndClean.getData()
 
 #Get rid of Passenger IDs
 train_data = np.array(train_data[:, 1:])
@@ -63,15 +66,19 @@ IDs = test_data[:, 0]
 
 result = np.column_stack((IDs, predicted)).astype(int)
 
-Features.showFeaturesImportance(train_data[:, 1::], train_data[:,0], labels[2:])
-parametersOptimisation.fitParameters(train_data[:, 1::], train_data[:,0])
+#Features.showFeaturesImportance(train_data[:, 1::], train_data[:,0], labels[2:])
+#parametersOptimisation.fitParameters(train_data[:, 1::], train_data[:,0])
+learningCurve.drawLearningCurve(train_data[:, 1::], train_data[:,0])
 
 np.savetxt('predicted.csv', result, fmt='%i', comments='', header='PassengerId,Survived', delimiter=',')
 
 
+
+
+"""
 dot_data = StringIO.StringIO()
 tree.export_graphviz(classifier, out_file=dot_data, feature_names=labels[2:])
 graph = pydot.graph_from_dot_data(dot_data.getvalue())
 graph.write_png('titanic.png')
-
+"""
 

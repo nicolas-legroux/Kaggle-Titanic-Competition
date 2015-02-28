@@ -6,6 +6,7 @@ import numpy as np
 import re
 import sys
 
+
 def getGroupCount(room, dict):    
     if dict[room] > 1:
         return dict[room]
