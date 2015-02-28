@@ -168,8 +168,8 @@ def getData():
     
     labels=['PassengerId', 'Survived', 'Gender', 'Title', 'Title_Mrs', 'Title_Miss', 'Title_Master', 'Title_Mr', 'Pclass', 'Fare', 
     'Age', 'AgeIsNull', 'StartingPort',  'Parch', 
-    'SibSp', 'Surname', 'Deck_A', 'Deck_B', 
-     'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F', 'Deck_G', 'Deck_Z', 'Deck', 'Room', 'GroupCount', 'GroupID', 'FamilySize']
+    'SibSp', 'Deck_A', 'Deck_B', 
+     'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F', 'Deck_G', 'Deck_Z', 'Deck', 'Room', 'GroupCount', 'GroupID', 'FamilySize', 'Surname']
     
     data = data[labels]  
    
