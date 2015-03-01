@@ -1,7 +1,7 @@
 from sklearn.ensemble import ExtraTreesClassifier
 import crossvalidation
 import numpy as np
-
+import readAndClean
 
 def getExtraTreesPrediction(X_train, y_train, X_test, classifierNames=[], printResult=False, test_IDs=[]):
     classifier = ExtraTreesClassifier(n_estimators=2, min_samples_leaf = 25)
@@ -15,9 +15,15 @@ def getExtraTreesPrediction(X_train, y_train, X_test, classifierNames=[], printR
     
     classifierNames = classifierNames + ["Extra Trees"]
     
-    classifier.fit(X_train, y_train)
-
-    predicted = classifier.predict(X_test)
+    X_train_filtered, featuresname = readAndClean.keepLabels(readAndClean.computeSecondaryFeatures(X_test, X_train, False))
+    X_test_filtered, featuresname = readAndClean.keepLabels(readAndClean.computeSecondaryFeatures(X_test, X_train, True))
+   
+    X_train_filtered = X_train_filtered.values
+    X_test_filtered = X_test_filtered.values
+    
+    classifier.fit(X_train_filtered, y_train)
+    
+    predicted = classifier.predict(X_test_filtered)
 
     if printResult:    
         result = np.column_stack((test_IDs, predicted)).astype(int)

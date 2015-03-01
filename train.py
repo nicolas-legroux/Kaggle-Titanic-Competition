@@ -13,29 +13,22 @@ from Classifiers import ExtraTrees
 from Classifiers import GradientBoost
 from Classifiers import LogisticRegression
 from Classifiers import RandomForest
-import parametersOptimisation
+
 #Get Data
-train_data, test_data, featureNames, data = readAndClean.getData()
+X_train, y_train, X_test, test_IDs = readAndClean.getData()
 
-train_IDs = train_data[:, 0]
-test_IDs = test_data[:, 0]
+test_IDs = test_IDs.values
+y_train = y_train.values
 
-#Get rid of Passenger IDs
-train_data = np.array(train_data[:, 1:])
-X_test = np.array(test_data[:, 1:])
-
-X_train = train_data[:, 1::]
-y_train = train_data[:, 0]
 
 #parametersOptimisation.fitParameters(X_train,y_train)
 
-featureNames = featureNames[2:]
 
 secondPass = False
 
 #Get results of some training algorithms
 RandomForest.getRandomForestPrediction(X_train, y_train, X_test, printResult=True, test_IDs=test_IDs)
-DecisionTree.getDecisionTreePrediction(X_train, y_train, X_test, "DecisionTree", featureNames, printResult=True, test_IDs=test_IDs)
+DecisionTree.getDecisionTreePrediction(X_train, y_train, X_test, "DecisionTree", printResult=True, test_IDs=test_IDs)
 ExtraTrees.getExtraTreesPrediction(X_train, y_train, X_test, printResult=True, test_IDs=test_IDs)
 GradientBoost.getGradientBoostPrediction(X_train, y_train, X_test, printResult=True, test_IDs=test_IDs)
 LogisticRegression.getLogisticRegressionPrediction(X_train, y_train, X_test, printResult=True, test_IDs=test_IDs)
@@ -49,7 +42,7 @@ if secondPass:
     RandomForest.getRandomForestPrediction(X_train, y_train, X_train, classifierNames)
     
     predictedTreeTrain, classifierTree, classifierNames =  \
-    DecisionTree.getDecisionTreePrediction(X_train, y_train, X_train, "FirstTree", featureNames)
+    DecisionTree.getDecisionTreePrediction(X_train, y_train, X_train, "FirstTree")
     
     predictedExtraTrain, classifierExtra, classifierNames = \
     ExtraTrees.getExtraTreesPrediction(X_train, y_train, X_train, classifierNames)

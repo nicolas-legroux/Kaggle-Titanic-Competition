@@ -44,7 +44,7 @@ def elementInList(elementID, IDlist):
     else:
         return 0      
         
-def getData(onlyBinary=False):
+def getData():
     
     #Open the csv files  
     data = pd.read_csv('Data/train.csv', header=0)    
@@ -198,14 +198,48 @@ def getData(onlyBinary=False):
     data['TravellingAlone'] = 1
     data.loc[((data.GroupCount>1) | (data.FamilySize>1)), 'TravellingAlone'] = 0
     
+
+    # -------------------------------------------------
     
-    # -----------------------------------------
+    
+    #Drop columns which are not numbers    
+    data = data.drop(["Cabin", "Name", "Ticket"], axis=1)
+    
+       
+    #Divide into train and test data
+    data_train = data[data.Survived.notnull()].astype(int)
+    data_test = data[data.Survived.isnull()]
+    
+    #Get Survived
+    survived = data_train["Survived"] 
+    
+    #Get test IDS
+    IDS = data_test["PassengerId"] 
+    
+    data_test = data_test.drop(["PassengerId"], axis=1)
+    data_train = data_train.drop(["PassengerId"], axis=1)
+    
+    return data_train, survived, data_test, IDS
+
+data_train, survived, data_test, IDS = getData()
+
+
+
+def computeSecondaryFeatures(data_test, data_train, isTest):
+        # -----------------------------------------
     
     #Create 2 features to know, for each person :
     # 1. Whether, in the same Family or Group, a Female or Child Died ('should have survived but died')
     # 2. Whether, in the same Family or Group, a Man survived ('should have died but survived')
     # This allows us to identify outliers.
-       
+    
+    data_test = data_test.drop('Survived', axis=1).astype(int)  
+    
+    if(isTest):
+        data = data_train.append(data_test)
+    else:
+        data = data_train
+    
     shouldHaveSurvivedButDiedGroupID = pd.Series(data[(((data.Sex == 0) & (data.Survived == 0)) | ((data.Title == 2) & (data.Survived == 0) & (data.Age<15))) & ((data.GroupCount>1) | (data.FamilySize>1))]["GroupID"]).unique()
     # GroupID = 0 means the person has no Group, therefore remove 0
     shouldHaveSurvivedButDiedGroupID = shouldHaveSurvivedButDiedGroupID[shouldHaveSurvivedButDiedGroupID != 0]
@@ -234,32 +268,38 @@ def getData(onlyBinary=False):
     data.loc[(data.hasFamilyThatShouldHaveDied == 1) | (data.hasFriendThatShouldHaveDied == 1), "inGroupWithOutlierSurvival"] = 1
     
     data = data.drop(["hasFamilyThatShouldHaveSurvived", "hasFriendThatShouldHaveSurvived", "hasFamilyThatShouldHaveDied", "hasFriendThatShouldHaveDied"], axis=1)
+     
+        
+    
+    
+    data_train = data[data.Survived.notnull()].astype(int)
+    data_test = data[data.Survived.isnull()]  
+    
+    data_test = data_test.drop('Survived', axis=1).astype(int)  
+    data_train = data_train.drop('Survived', axis=1).astype(int)  
+        
+    if(isTest):
+        return data_test
+    else:
+        return data_train
       
-    # -------------------------------------------------
-    
-    #Drop columns which are not numbers    
-    data = data.drop(["Cabin", "Name", "Ticket"], axis=1)
-    
-    #Re-order the labels   
+def keepLabels(data, onlyBinary=False):
+     #Re-order the labels   
     
     #labels=['PassengerId', 'Survived', 'Title_Mr', 'Title_Miss', 'Title_Mrs', 'Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F',
     #        'Deck_G', 'Deck_Z', 'TicketNumber', 'Pclass', 'GroupCount', 'FamilySize', 'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival']
     
-    labels=['PassengerId', 'Survived', 'Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F',
-    'Deck_G', 'Deck_Z', 'Deck', 'TicketNumber', 'Pclass', 'GroupCount', 'FamilySize', 'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival','Title_Mr', 'Title_Miss', 'Title_Mrs', 'FarePerPerson']
+    labels = ['Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F',
+    'Deck_G', 'Deck_Z', 'Deck', 'TicketNumber', 'Pclass', 'GroupCount', 'FamilySize', 'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival',
+    'Title_Mr', 'Title_Miss', 'Title_Mrs', 'FarePerPerson', 'Class_1', 'Class_2', 'Class_3']
 
-    labels_not_boolean = ['Pclass', 'Age', 'TicketNumber', 'GroupCount', 'FamilySize', 'FarePerPerson']
+    labels_not_boolean = ['Pclass', 'Age', 'TicketNumber', 'GroupCount', 'FamilySize', 'FarePerPerson', 'Deck']
     
     data = data[labels]
     
     if(onlyBinary):        
         data = data.drop(labels_not_boolean, axis=1)
+        labels = labels_not_boolean
+        
+    return data, labels
     
-    #Divide into train and test data
-    data_train = data[data.Survived.notnull()].astype(int)
-    data_test = data[data.Survived.isnull()]
-    data_test = data_test.drop('Survived', axis=1).astype(int)  
-    
-    return data_train.values, data_test.values, labels, data
-
-data_train, data_test, labels, lb = getData()

@@ -1,10 +1,11 @@
 from sklearn.ensemble import RandomForestClassifier
 import crossvalidation
 import numpy as np
+import readAndClean
 
 
 def getRandomForestPrediction(X_train, y_train, X_test, classifierNames=[], printResult=False, test_IDs=[]):
-    classifier = RandomForestClassifier(n_estimators=2228, min_samples_split = 7, min_samples_leaf=2, criterion='entropy', max_features=6)
+    classifier = RandomForestClassifier(n_estimators=1000, min_samples_leaf=20)
     #Perform cross validation
     
     print "\n********* START RANDOM FOREST *********"
@@ -15,9 +16,15 @@ def getRandomForestPrediction(X_train, y_train, X_test, classifierNames=[], prin
     
     classifierNames = classifierNames + ["RandomForest"]
     
-    classifier.fit(X_train, y_train)
+    X_train_filtered, featuresname = readAndClean.keepLabels(readAndClean.computeSecondaryFeatures(X_test, X_train, False))
+    X_test_filtered, featuresname = readAndClean.keepLabels(readAndClean.computeSecondaryFeatures(X_test, X_train, True))
+   
+    X_train_filtered = X_train_filtered.values
+    X_test_filtered = X_test_filtered.values
     
-    predicted = classifier.predict(X_test)
+    classifier.fit(X_train_filtered, y_train)
+    
+    predicted = classifier.predict(X_test_filtered)
 
     if printResult:    
         result = np.column_stack((test_IDs, predicted)).astype(int)

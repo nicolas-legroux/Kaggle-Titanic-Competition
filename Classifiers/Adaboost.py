@@ -1,6 +1,7 @@
 from sklearn.ensemble import AdaBoostClassifier
 import crossvalidation
 import numpy as np
+import readAndClean
 
 
 def getAdaboostPrediction(X_train, y_train, X_test, classifierNames=[], printResult=False, test_IDs=[]):
@@ -15,9 +16,15 @@ def getAdaboostPrediction(X_train, y_train, X_test, classifierNames=[], printRes
     
     classifierNames = classifierNames + ["Adaboost"]
     
-    classifier.fit(X_train, y_train)
+    X_train_filtered, featuresname = readAndClean.keepLabels(readAndClean.computeSecondaryFeatures(X_test, X_train, False))
+    X_test_filtered, featuresname = readAndClean.keepLabels(readAndClean.computeSecondaryFeatures(X_test, X_train, True))
+   
+    X_train_filtered = X_train_filtered.values
+    X_test_filtered = X_test_filtered.values
     
-    predicted = classifier.predict(X_test)
+    classifier.fit(X_train_filtered, y_train)
+    
+    predicted = classifier.predict(X_test_filtered)
     
     if printResult:    
         result = np.column_stack((test_IDs, predicted)).astype(int)
