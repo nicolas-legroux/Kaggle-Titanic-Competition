@@ -25,7 +25,7 @@ import learningCurve
 random.seed()
 
 #Choose a classifie
-classifier = DecisionTreeClassifier(max_depth=3)
+classifier = RandomForestClassifier(n_estimators=9000, min_samples_leaf = 25)
 
 #Get Data
 train_data, test_data, labels, data = readAndClean.getData()
@@ -44,7 +44,7 @@ num = float(len(r))/cross_validation_folds
 cross_validation_chunks = [ r [i:i + int(num)] for i in range(0, (cross_validation_folds -1)*int(num), int(num))]
 cross_validation_chunks.append(r[(cross_validation_folds -1)*int(num):])
 
-
+"""
 #Perform Cross Validation
 resultsTrainingSet = []
 resultsTestSet = []
@@ -59,6 +59,7 @@ for i in range(cross_validation_folds):
 
 print np.array(resultsTrainingSet).mean()
 print np.array(resultsTestSet).mean()
+"""
 
 classifier = classifier.fit(train_data[:, 1::], train_data[:,0])
 predicted = classifier.predict(test_data_NoID)
@@ -72,9 +73,11 @@ result = np.column_stack((IDs, predicted)).astype(int)
 
 np.savetxt('predicted.csv', result, fmt='%i', comments='', header='PassengerId,Survived', delimiter=',')
 
+"""
 dot_data = StringIO.StringIO()
 tree.export_graphviz(classifier, out_file=dot_data, feature_names=labels[2:])
 graph = pydot.graph_from_dot_data(dot_data.getvalue())
 graph.write_png('titanic.png')
+"""
 
 
