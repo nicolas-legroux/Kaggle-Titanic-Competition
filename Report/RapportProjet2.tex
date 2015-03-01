@@ -55,6 +55,69 @@ Some features were missing values. The first step was to prepare the data
 
 \subsection{Preparing the data}
 
+\section{Tools}
+\subsection{Cross validation}
+We implemented a cross validation in order to get some feedback about our models without using Kaggle, using 10% 
+of the train data for the test. The results were actually quite surprising : while we always had 
+high cross validation score (around 0.88), the result in Kaggle was really above that number.
+With our final model we even had a 0.99 cross validation score, corresponding to a 0.81 score on Kaggle. 
+This would led us think that the data wasn't randomly splitted between the test and the train data. 
 
+\subsection{Parameters optimisation}
+In order to improve our classifiers we tried different methods. One of them was using the sklearn 
+capacities of RandomizedSearchCV. This function tries different parameters value in a predefined range 
+and returns the most promising ones. Unfortunately, that method didn't really help us to get a better score.
+
+\subsection{Learning curve}
+In order to indicate us the bias and variance of our classifiers we used learning curves. This helped us 
+noticed the high variance of our decision tree and led us to use a forest.
+
+
+\section{Classifiers}
+\subsection{First decision tree}
+We first started with a very simple decision tree. We limited its to 3, and we used only the features directly present
+in the data. This decision scored a score of 0.77, which is just above the simple `Gender` approach, but allowed us to 
+get into the problem. \\
+The tree predicted well the 'easy' profiles : man or woman, class, etc. We now had to find a way to solve the 'hard' cases. 
+
+\subsection{Adding new features (1/2)}
+In order to improve our score, we decided to do some feature engineering. At that step, we created the features :
+
+
+
+
+\begin{enumerate}
+ \item Title (keeping all of them)
+ \item Surname for family above 2 members
+ \item Deck
+ \item Cabin number
+\end{enumerate}
+
+We then decided to use a random forest to use those new features. We were thinking that for instance the Surname feature 
+would be useful only with a lot of weak classifiers. We got a score above 0.78 by using that forest. \\
+We then tried to improve our use of those features : We merged different categorical values together (like Mme and Mrs, or 
+all the superior titles into one). We also created dummies for values like Deck, if a deck in particular had an impact.
+All these modifications got us to slightly improve the score. We could noticed in a DecisionTree (depth 3) that for instance the Deck E 
+played a special role in the sinking.\\
+We then used the 'GroupID' feature. The idea behind that feature is the same idea that behind families : We can expect
+that the people who were traveling together were at the same place than the accident occured. By using that feature, we managed
+to get above the score of 0.79.
+
+\subsection{Adding new features (2/2)}
+
+\subsection{Bagging}
+To that point, we only used trees or forest. We tried other classifiers, like Logistic Regression (with 
+only dummy features), GradientBoosting or Extra trees. The idea is that a classifier can be better than 
+an other one in a particular situation. To combine the result of all the classifiers used, we finally 
+used a DecisionTree.
+
+\begin{figure}[h!]
+  \centering
+    
+      \includegraphics[width=14cm]{finalTree.png}
+  \caption{Final decision tree}
+\end{figure}
+
+That method got us a score of about 0.8. It did not improve our score, but finest 
 
 \end{document}          
