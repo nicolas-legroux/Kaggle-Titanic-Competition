@@ -1,17 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 import numpy as np
 import re
-import sys
-
-
-def getGroupCount(room, dict):    
-    if dict[room] > 1:
-        return dict[room]
-    else:    
-        return 0
 
 def getGroupID(room, dict):    
     if dict[room] > 1:
@@ -26,7 +17,7 @@ def getSurname(name):
     else:    
         return ""
         
-def getRoom(ticket):
+def getTicketNumber(ticket):
     matchObj = re.match(r'([0-9]+)', ticket)
     if matchObj:
         return matchObj.group(1)
@@ -38,8 +29,7 @@ def getTitle(name):
     if matchObj:    
         return matchObj.group(2)    
     else:    
-        return ""
-        
+        return ""        
 
 def getDeck(ticketNumber):    
     matchObj = re.match(r'^([A-Z])', ticketNumber,re.IGNORECASE)     
@@ -48,95 +38,68 @@ def getDeck(ticketNumber):
     else:    
         return ""
         
-def testGG(IDiii, IDlist):
-    if (IDiii in IDlist):
+def elementInList(elementID, IDlist):
+    if (elementID in IDlist):
         return 1
     else:
-        return 0
-                
-
+        return 0      
         
-def getData():
-    #Open the csv train file
+def getData(onlyBinary=False):
     
-    data = pd.read_csv('Data/train.csv', header=0)
-    
+    #Open the csv files  
+    data = pd.read_csv('Data/train.csv', header=0)    
     test_data = pd.read_csv('Data/test.csv', header=0)
+    #Append the test data to the train data
     data = data.append(test_data)
     
-    #Set 'Gender'=0 for women and 1 for men
-    data['Gender'] = data['Sex'].map({'female':0, 'male':1} ).astype(int)
+    # --------------------------------
     
-    """
-    #Compute information about ports of embarcation
-    embarked = np.zeros((2, 3, 3))
-    for i in range(2):
-        for j in range(3):
-            for k in range(3):
-                if k==0:                
-                    embarked[i, j, k] = len(data[(data['Gender'] == i) & (data['Embarked'] == 'C') & (data['Pclass'] == j+1)])
-                elif k==1:
-                    embarked[i, j, k] = len(data[(data['Gender'] == i) & (data['Embarked'] == 'Q') & (data['Pclass'] == j+1)])
-                else:
-                    embarked[i, j, k] = len(data[(data['Gender'] == i) & (data['Embarked'] == 'S') & (data['Pclass'] == j+1)]) 
-                    
-    #This shows that most passengers embarked in Southampton
-    #print embarked
-    """
+    #Set 'Sex'=0 for women and 1 for men
+    data['Sex'] = data['Sex'].map({'female':0, 'male':1} ).astype(int)   
+    
+    # -------------------------------
+    
+    #Create dummies for Pclass   
+    classes = pd.get_dummies(data['Pclass']).rename(columns=lambda x: 'Class_' + str(x))
+    data = pd.concat([data, classes], axis=1)
+    
+    # -------------------------------
     
     #Set the embarcation port to Southampton when it is null
     data.loc[ data.Embarked.isnull(), 'Embarked'] = 'S'  
     
+    #Create dummies for the embarked feature
+    embarkedDummies = pd.get_dummies(data['Embarked']).rename(columns=lambda x: 'Embarked_' + str(x))
+    data = pd.concat([data, embarkedDummies], axis=1)    
     #Transform the embarcation information into an integer
-    data['StartingPort'] = data['Embarked'].map({'C':0, 'Q':1, 'S':2} )  
+    data['Embarked'] = data['Embarked'].map({'C':0, 'Q':1, 'S':2} )
     
-    #Fill in the age median information
-    median_ages = np.zeros((2,3))
-    
-    for i in range(2):
-        for j in range(3):
-            median_ages[i,j] = data[(data['Gender'] == i) & \
-                                  (data['Pclass'] == j+1)]['Age'].dropna().median()
-    
-    data['AgeIsNull'] = pd.isnull(data.Age).astype(int)
-    
-    #Compute ages when it is missing
-    for i in range(2):
-        for j in range(3):
-            data.loc[ (data.Age.isnull()) & (data.Gender == i) & (data.Pclass == j+1), 'Age' ] = median_ages[i, j]
-    
-    data['Age']  = data['Age'] .astype(int)
-    
-    #Set Fares
-    faresMedian = np.zeros(3)
-    for j in range(3):
-        faresMedian[j] = data[data.Pclass == j+1]['Fare'].dropna().median()
+    # ---------------------------------------
         
-    for j in range(3):
-        data.loc[ (data.Fare.isnull()) & (data.Pclass == j+1), 'Fare'] = faresMedian[j]
-    
-    #Compute a few features
-    data['FamilySize'] = data['SibSp'] + data['Parch'] + 1
-    
+    #Retrieve family last name
     data["Surname"] = data["Name"].apply(lambda name: getSurname(name))
-    data["Title"] = data["Name"].apply(lambda name: getTitle(name))
-   
     
+    # --------------------------------------
+    
+    #Retrieve Title and transform the titles into either 'Mr', 'Mrs', 'Master', or 'Miss'
+    data["Title"] = data["Name"].apply(lambda name: getTitle(name))       
+      
     """
+    # Print the titles
     print pd.Series(data.Title).unique()
-    This shows the following : 
-    ['Mr' 'Mrs' 'Miss' 'Master' 'Don' 'Rev' 'Dr' 'Mme' 'Ms' 'Major' 'Lady'
-     'Sir' 'Mlle' 'Col' 'Capt' 'the' 'Jonkheer' 'Dona']
-     "the" is actually "the Countess"
-    """
-       
+    # This shows the following : 
+    #  ['Mr' 'Mrs' 'Miss' 'Master' 'Don' 'Rev' 'Dr' 'Mme' 'Ms' 'Major' 'Lady'
+    # 'Sir' 'Mlle' 'Col' 'Capt' 'the' 'Jonkheer' 'Dona']
+    # "the" is actually "the Countess"
+    """       
     data["Title"] = data["Title"].replace(["Mme", "the", "Dona", "Lady"], "Mrs")
     data["Title"] = data["Title"].replace(["Ms", "Mlle"], "Miss")
-    data.loc[(data.Gender == 0) & (data.Title == "Dr"), "Title" ] = "Mrs"
-    data["Title"] = data["Title"].replace(["Dr", "Don", "Jonkheer", "Col", "Sir", "Rev", "Major", "Capt"], "Mr")
+    data.loc[(data.Sex == 0) & (data.Title == "Dr"), "Title" ] = "Mrs"
+    data["Title"] = data["Title"].replace(["Dr", "Don", "Jonkheer", "Col", "Sir", "Rev", "Major", "Capt"], "Mr")    
     
+    #Create dummies for the Title
     titles = pd.get_dummies(data['Title']).rename(columns=lambda x: 'Title_' + str(x))
-    data = pd.concat([data, titles], axis=1)
+    data = pd.concat([data, titles], axis=1)    
     
     """Stats on title
     statsTitle = data[(data.Title == "Miss") & (data.Survived.notnull())]
@@ -147,74 +110,152 @@ def getData():
     #79% of Mrs survived
     """
     
+    #Map the title to integers    
     data['Title'] = data['Title'].map({'Mrs':0, 'Miss':1, 'Master':2, 'Mr':3})
-
+    
+    # ---------------------------------------
+    
+    #Fill in the age median information using Title and Class information
+    median_ages = np.zeros((4,3))    
+    for i in range(4):
+        for j in range(3):
+            median_ages[i,j] = data[(data['Title'] == i) & \
+                                  (data['Pclass'] == j+1)]['Age'].dropna().median()
+    
+    # Create a feature to know when the age was Null
+    data['AgeIsNull'] = pd.isnull(data.Age).astype(int)
+    
+    #Compute ages when it is missing using median information
+    for i in range(4):
+        for j in range(3):
+            data.loc[ (data.Age.isnull()) & (data.Title == i) & (data.Pclass == j+1), 'Age' ] = median_ages[i, j]
+            
+    # -------------------------------------
+            
+    #Set missing Fares using Class information
+    faresMedian = np.zeros(3)
+    for j in range(3):
+        faresMedian[j] = data[data.Pclass == j+1]['Fare'].dropna().median()
+        
+    for j in range(3):
+        data.loc[ (data.Fare.isnull()) & (data.Pclass == j+1), 'Fare'] = faresMedian[j]
+        
+    # -------------------------------------
+    
+    #Create some family features
+    
+    #Compute family size
+    data['FamilySize'] = data['SibSp'] + data['Parch'] + 1
+    
+    #Drop surname when person has no family
     data.loc[(data.FamilySize == 0), "Surname"] = "Single"
-    #This is used to compare different families with the same name but different family sizes
-    data['Surname'] = data.FamilySize.map(str) + data.Surname    
+    #Set surname = concat(family size, surname) [To avoid mixing families with same surname but different family sizes]
+    data['Surname'] = data.FamilySize.map(str) + data.Surname  
+    #Transform surnames into Integers
     data.Surname = pd.factorize(data.Surname)[0]
     
-    data.loc[(data.Cabin.isnull()) | (data.Cabin == ''), "Cabin"] = "Z0000"     
-    data["Deck"] = data["Cabin"].apply(lambda ticket: getDeck(ticket))
-    data["Deck"] = data["Deck"].replace("T", "Z")    
+    # ---------------------------------------
+    
+    # Set Cabin = Z0000 when there is no Info
+    data.loc[(data.Cabin.isnull()) | (data.Cabin == ''), "Cabin"] = "Z0000"  
+    # Get the Deck (first letter of cabin number)
+    data["Deck"] = data["Cabin"].apply(lambda cabin: getDeck(cabin))
+    # For some reason there is one Deck 'T' in the Data, set it to 'Unknown Deck'
+    data["Deck"] = data["Deck"].replace("T", "Z") 
+    
+    #Create dummies for the Deck feature
     decks = pd.get_dummies(data['Deck']).rename(columns=lambda x: 'Deck_' + str(x))
-
-    data['Deck'] = data['Deck'].map({'A':0, 'B':1, 'C':2, 'D':3, 'E':4, 'F':5, 'G':6, 'Z':7})
     data = pd.concat([data, decks], axis=1)
     
-    data["Room"] = data["Ticket"].apply(lambda ticket: getRoom(ticket)).astype(int)
-    data["GroupID"] = data["Room"]
-    counts = data["Room"].value_counts()
+    #Map the Deck Letter to Integers
+    data['Deck'] = data['Deck'].map({'A':0, 'B':1, 'C':2, 'D':3, 'E':4, 'F':5, 'G':6, 'Z':7})
+    
+    # ----------------------------------------
+    
+    #Retrieve ticket number
+    data["TicketNumber"] = data["Ticket"].apply(lambda ticket: getTicketNumber(ticket)).astype(int)
+    
+    #Create groups (ie People with same ticket number --> not necessarily in the same family !)
+    data["GroupID"] = data["TicketNumber"]
+    counts = data["TicketNumber"].value_counts()
     nroom = dict(counts)
-    data['GroupCount'] = data['Room'].map(nroom)
-    data.loc[ (data.Room == 0), 'GroupCount'] = 1 #For the passengers without rooms attributed
+       
+    # Create feature 'how many people with same ticket number'
+    data['GroupCount'] = data['TicketNumber'].map(nroom)
+    data.loc[ (data.TicketNumber == 0), 'GroupCount'] = 1 #For the passengers alone in a group
     
-    #data["GroupCount"] = data["Room"].apply(lambda room: getGroupCount(room, nroom)).astype(int)
-    data["GroupID"] = data["Room"].apply(lambda room: getGroupID(room, nroom)).astype(int)
-    
+    #Create Group IDs
+    data["GroupID"] = data["TicketNumber"].apply(lambda room: getGroupID(room, nroom)).astype(int)    
     data.GroupID = pd.factorize(data.GroupID)[0]
     
-    data = data.drop(['Name', 'Sex', 'Cabin', 'Embarked', 'Ticket'], axis=1)
+    # -----------------------------------------
     
-    shouldHaveSurvivedButDiedGroupID = pd.Series(data[(((data.Gender == 0) & (data.Survived == 0)) | ((data.Title == 2) & (data.Survived == 0) & (data.Age<12))) & ((data.GroupCount>1) | (data.FamilySize>1))]["GroupID"]).unique()
+    #To know whether a passenger is in a group or family
+    
+    data['TravellingAlone'] = 1
+    data.loc[((data.GroupCount>1) | (data.FamilySize>1)), 'TravellingAlone'] = 0
+    
+    
+    # -----------------------------------------
+    
+    #Create 2 features to know, for each person :
+    # 1. Whether, in the same Family or Group, a Female or Child Died ('should have survived but died')
+    # 2. Whether, in the same Family or Group, a Man survived ('should have died but survived')
+    # This allows us to identify outliers.
+       
+    shouldHaveSurvivedButDiedGroupID = pd.Series(data[(((data.Sex == 0) & (data.Survived == 0)) | ((data.Title == 2) & (data.Survived == 0) & (data.Age<15))) & ((data.GroupCount>1) | (data.FamilySize>1))]["GroupID"]).unique()
+    # GroupID = 0 means the person has no Group, therefore remove 0
     shouldHaveSurvivedButDiedGroupID = shouldHaveSurvivedButDiedGroupID[shouldHaveSurvivedButDiedGroupID != 0]
-    shouldHaveSurvivedButDiedFamilyID = pd.Series(data[(((data.Gender == 0) & (data.Survived == 0)) | ((data.Title == 2) & (data.Survived == 0) & (data.Age<12))) & ((data.GroupCount>1) | (data.FamilySize>1))]["Surname"]).unique()
-    
+    shouldHaveSurvivedButDiedFamilyID = pd.Series(data[(((data.Sex == 0) & (data.Survived == 0)) | ((data.Title == 2) & (data.Survived == 0) & (data.Age<15))) & ((data.GroupCount>1) | (data.FamilySize>1))]["Surname"]).unique()
     
     shouldHaveDiedButSurvivedGroupID = (pd.Series(data[((data.Title == 3) & (data.Survived == 1) & (data.Age>18)) & ((data.GroupCount>1) | (data.FamilySize>1))]['GroupID'])).unique()
-    shouldHaveDiedButSurvivedFamilyID = (pd.Series(data[((data.Title == 3) & (data.Survived == 1) & (data.Age>18)) & ((data.GroupCount>1) | (data.FamilySize>1))]['Surname'])).unique()
     shouldHaveDiedButSurvivedGroupID = shouldHaveDiedButSurvivedGroupID[shouldHaveDiedButSurvivedGroupID != 0]
+    shouldHaveDiedButSurvivedFamilyID = (pd.Series(data[((data.Title == 3) & (data.Survived == 1) & (data.Age>18)) & ((data.GroupCount>1) | (data.FamilySize>1))]['Surname'])).unique()
+        
+    data["hasFamilyThatShouldHaveSurvived"] = 0
+    data["hasFamilyThatShouldHaveSurvived"] = data["Surname"].apply(lambda familyID : elementInList(familyID.astype(int), shouldHaveSurvivedButDiedFamilyID))
     
-    data["HasFamilyOrFriendThatShouldHaveSurvivedFamily"] = 0
-    data["HasFamilyOrFriendThatShouldHaveSurvivedFamily"] = data["Surname"].apply(lambda IDiii : testGG(IDiii.astype(int), shouldHaveSurvivedButDiedFamilyID))
+    data["hasFriendThatShouldHaveSurvived"] = 0
+    data["hasFriendThatShouldHaveSurvived"] = data["GroupID"].apply(lambda groupID : elementInList(groupID.astype(int), shouldHaveSurvivedButDiedGroupID))
     
-    data["HasFamilyOrFriendThatShouldHaveSurvivedGroup"] = 0
-    data["HasFamilyOrFriendThatShouldHaveSurvivedGroup"] = data["GroupID"].apply(lambda IDiii : testGG(IDiii.astype(int), shouldHaveSurvivedButDiedGroupID))
+    data["inGroupWithOutlierDeath"] = 0
+    data.loc[(data.hasFamilyThatShouldHaveSurvived == 1) | (data.hasFriendThatShouldHaveSurvived == 1), "inGroupWithOutlierDeath"] = 1
     
-    data["FamilyDied"] = 0
-    data.loc[(data.HasFamilyOrFriendThatShouldHaveSurvivedFamily == 1) | (data.HasFamilyOrFriendThatShouldHaveSurvivedGroup == 1), "FamilyDied"] = 1
+    data["hasFamilyThatShouldHaveDied"] = 0
+    data["hasFamilyThatShouldHaveDied"] = data["Surname"].apply(lambda familyID : elementInList(familyID.astype(int), shouldHaveDiedButSurvivedFamilyID))
     
-    data["HasFamilyOrFriendThatShouldHaveDiedFamily"] = 0
-    data["HasFamilyOrFriendThatShouldHaveDiedFamily"] = data["Surname"].apply(lambda IDiii : testGG(IDiii.astype(int), shouldHaveDiedButSurvivedFamilyID))
+    data["hasFriendThatShouldHaveDied"] = 0
+    data["hasFriendThatShouldHaveDied"] = data["GroupID"].apply(lambda groupID : elementInList(groupID.astype(int), shouldHaveDiedButSurvivedGroupID))
     
-    data["HasFamilyOrFriendThatShouldHaveDiedGroup"] = 0
-    data["HasFamilyOrFriendThatShouldHaveDiedGroup"] = data["GroupID"].apply(lambda IDiii : testGG(IDiii.astype(int), shouldHaveDiedButSurvivedGroupID))
+    data["inGroupWithOutlierSurvival"] = 0
+    data.loc[(data.hasFamilyThatShouldHaveDied == 1) | (data.hasFriendThatShouldHaveDied == 1), "inGroupWithOutlierSurvival"] = 1
     
-    data["FamilySurvived"] = 0
-    data.loc[(data.HasFamilyOrFriendThatShouldHaveDiedFamily == 1) | (data.HasFamilyOrFriendThatShouldHaveDiedGroup == 1), "FamilySurvived"] = 1
+    data = data.drop(["hasFamilyThatShouldHaveSurvived", "hasFriendThatShouldHaveSurvived", "hasFamilyThatShouldHaveDied", "hasFriendThatShouldHaveDied"], axis=1)
+      
+    # -------------------------------------------------
     
-    labels=['PassengerId', 'Survived', 'Title_Mr', 'Title_Miss', 'Title_Mrs', 'Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F', 
-    'Deck_G', 'Deck_Z', 'Room', 'Pclass', 'GroupCount', 'FamilySize', 'FamilyDied', 'FamilySurvived']
+    #Drop columns which are not numbers    
+    data = data.drop(["Cabin", "Name", "Ticket"], axis=1)
     
-    data = data[labels]  
-   
+    #Re-order the labels    
+    labels=['PassengerId', 'Survived', 'Sex', 'Pclass', 'Class_1', 'Class_2', 'Class_3', 'Title', 'Title_Mrs', 'Title_Miss', 'Title_Master', 
+    'Title_Mr', 'Age', 'AgeIsNull', 'Deck', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F', 
+    'Deck_G', 'Deck_Z', 'TicketNumber', 'TravellingAlone', 'Fare', 'Surname', 'GroupID', 'Parch', 'SibSp', 'GroupCount', 'FamilySize',
+    'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival', 'Embarked', 'Embarked_C', 'Embarked_Q', 'Embarked_S']
+    
+    labels_not_boolean = ['Pclass', 'Title', 'Age', 'Deck', 'TicketNumber', 'Fare', 'Surname', 'GroupID', 'Parch', 'SibSp',
+                          'GroupCount', 'FamilySize', 'Embarked']
+    
+    data = data[labels]
+    
+    if(onlyBinary):        
+        data = data.drop(labels_not_boolean, axis=1)
+    
+    #Divide into train and test data
     data_train = data[data.Survived.notnull()].astype(int)
     data_test = data[data.Survived.isnull()]
-    data_test = data_test.drop('Survived', axis=1).astype(int)
+    data_test = data_test.drop('Survived', axis=1).astype(int)  
     
-    #print data.info()
-        
     return data_train.values, data_test.values, labels, data
 
-d, b, c, data = getData()
-
+data_train, data_test, labels, lb = getData()
