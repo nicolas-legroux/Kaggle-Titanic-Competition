@@ -21,7 +21,7 @@ def getAdaboostPrediction(X_train, y_train, X_test, classifierNames=[], printRes
     
     if printResult:    
         result = np.column_stack((test_IDs, predicted)).astype(int)
-        np.savetxt('predictedGradientBoost.csv', result, fmt='%i', comments='', header='PassengerId,Survived', delimiter=',')
-        print "File written for GradientBoost."
+        np.savetxt('predictedAdaBoost.csv', result, fmt='%i', comments='', header='PassengerId,Survived', delimiter=',')
+        print "File written for AdaBoost."
       
     return predicted, classifier, classifierNames   

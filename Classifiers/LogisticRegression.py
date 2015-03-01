@@ -21,7 +21,7 @@ def getLogisticRegressionPrediction(X_train, y_train, X_test, classifierNames=[]
 
     if printResult:    
         result = np.column_stack((test_IDs, predicted)).astype(int)
-        np.savetxt('predictedLogisitcRegression.csv', result, fmt='%i', comments='', header='PassengerId,Survived', delimiter=',')
-        print "File written for Logisitic Regression."
+        np.savetxt('predictedLogisticRegression.csv', result, fmt='%i', comments='', header='PassengerId,Survived', delimiter=',')
+        print "File written for Logistic Regression."
       
     return predicted, classifier, classifierNames
