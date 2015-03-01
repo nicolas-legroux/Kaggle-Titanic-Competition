@@ -7,12 +7,12 @@ import pydot
 def getDecisionTreePrediction(X_train, y_train, X_test, featuresname, classifiersname, treefilename):
     classifier = tree.DecisionTreeClassifier()
     
-    errortraining, errortest = crossvalidation.crossValidation(X_train, y_train, classifier)
-
-    print "********* START DECISION TREE *********"
-    print "Training error" , errortraining 
-    print "Test error : " , errortest
-    print "********* END DECISION TREE *********"
+    print "\n********* START DECISION TREE *********"
+    errortraining, errortest = crossvalidation.crossValidation(X_train, y_train, classifier)    
+    print "Score on Training Set" , errortraining 
+    print "Score on Test Set : " , errortest
+    print "********* END DECISION TREE *********\n"
+    
     classifiersname = classifiersname + ["Decision Tree"]
     classifier.fit(X_train, y_train)
     

@@ -5,12 +5,11 @@ import crossvalidation
 def getGradientBoostPrediction(X_train, y_train, X_test, featuresname, classifiersname):
     classifier = GradientBoostingClassifier()
     #Perform cross validation
-    errortraining, errortest = crossvalidation.crossValidation(X_train, y_train, classifier)
-    
-    print "********* START GRADIENT BOOST *********"
-    print "Training error" , errortraining 
-    print "Test error : " , errortest
-    print "********* END GRADIENT BOOST *********"
+    print "\n********* START GRADIENT BOOST *********"
+    errortraining, errortest = crossvalidation.crossValidation(X_train, y_train, classifier)    
+    print "Score on Training Set" , errortraining 
+    print "Score on Test Set : " , errortest
+    print "********* END GRADIENT BOOST *********\n"
     
     classifiersname = classifiersname + ["GradientBoost"]
     classifier.fit(X_train, y_train)

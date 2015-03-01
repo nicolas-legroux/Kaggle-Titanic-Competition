@@ -8,8 +8,8 @@ def getAdaboostPrediction(X_train, y_train, X_test, featuresname, classifiersnam
     errortraining, errortest = crossvalidation.crossValidation(X_train, y_train, classifier)
     
     print "********* START ADABOOST *********"
-    print "Training error" , errortraining 
-    print "Test error : " , errortest
+    print "Score on Training Set" , errortraining 
+    print "Score on Test Set : " , errortest
     print "********* END ADABOOST *********"
     classifiersname = classifiersname + ["Adaboost"]
     classifier.fit(X_train, y_train)
