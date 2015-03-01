@@ -203,8 +203,8 @@ def getData():
     data["FamilySurvived"] = 0
     data.loc[(data.HasFamilyOrFriendThatShouldHaveDiedFamily == 1) | (data.HasFamilyOrFriendThatShouldHaveDiedGroup == 1), "FamilySurvived"] = 1
     
-    labels=['PassengerId', 'Survived', 'Title', 'Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F', 
-    'Deck_G', 'Deck_Z', 'Deck', 'Room', 'Pclass', 'GroupCount', 'FamilySize', 'FamilyDied', 'FamilySurvived']
+    labels=['PassengerId', 'Survived', 'Title_Mr', 'Title_Miss', 'Title_Mrs', 'Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F', 
+    'Deck_G', 'Deck_Z', 'Room', 'Pclass', 'GroupCount', 'FamilySize', 'FamilyDied', 'FamilySurvived']
     
     data = data[labels]  
    
