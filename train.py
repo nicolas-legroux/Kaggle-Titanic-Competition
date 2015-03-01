@@ -7,62 +7,73 @@ Created on Fri Feb 27 18:48:30 2015
 
 import numpy as np
 import readAndClean
-import random
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.ensemble import GradientBoostingClassifier
-import Features
-import StringIO
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.learning_curve import learning_curve
-from sklearn import tree
-import pydot
-import parametersOptimisation
-import matplotlib.pyplot as plt
-import learningCurve
-
-random.seed()
-
-#Choose a classifie
-classifier = RandomForestClassifier(n_estimators=1000, min_samples_leaf = 25)
+from Classifiers import Adaboost
+from Classifiers import DecisionTree
+from Classifiers import ExtraTrees
+from Classifiers import GradientBoost
+from Classifiers import LogisticRegression
+from Classifiers import RandomForest
 
 #Get Data
-train_data, test_data, labels, data = readAndClean.getData()
+train_data, test_data, featuresname, data = readAndClean.getData()
 
 #Get rid of Passenger IDs
 train_data = np.array(train_data[:, 1:])
 test_data_NoID = np.array(test_data[:, 1:])
-numberOfLines = train_data.shape[0]
 
-r = [i for i in range(numberOfLines)]
-random.shuffle(r)
+X_train = train_data[:, 1::]
+y_train = train_data[:, 0]
 
-#Set Cross Validation parameters
-cross_validation_folds = 10
-num = float(len(r))/cross_validation_folds
-cross_validation_chunks = [ r [i:i + int(num)] for i in range(0, (cross_validation_folds -1)*int(num), int(num))]
-cross_validation_chunks.append(r[(cross_validation_folds -1)*int(num):])
+featuresname = featuresname[2:]
+
+X_test =  test_data_NoID
+
+#Go with a few classifier
+
+#predictedForest = RandomForest.getRandomForestPrediction(X_train, y_train, X_test)
+#predictedTree = DecisionTree.getDecisionTreePrediction(X_train, y_train, X_test)
+#predictedExtra = ExtraTrees.getExtraTreesPrediction(X_train, y_train, X_test)
+#predictedGradient = GradientBoost.getGradientBoostPrediction(X_train, y_train, X_test)
+#predictedLogistic = LogisticRegression.getLogisticRegressionPrediction(X_train, y_train, X_test)
+#predictedAdaboost = Adaboost.getAdaboostPrediction(X_train, y_train, X_test)
+
+classifiersname = []
+
+predictedForestTrain,classifierForest,classifiersname = RandomForest.getRandomForestPrediction(X_train, y_train, X_train,featuresname,classifiersname)
+predictedTreeTrain,classifierTree,classifiersname = DecisionTree.getDecisionTreePrediction(X_train, y_train, X_train,featuresname,classifiersname,"firstTree")
+predictedExtraTrain,classifierExtra,classifiersname = ExtraTrees.getExtraTreesPrediction(X_train, y_train, X_train,featuresname,classifiersname)
+predictedGradientTrain,classifierGradient,classifiersname = GradientBoost.getGradientBoostPrediction(X_train, y_train, X_train,featuresname,classifiersname)
+predictedLogisticTrain,classifierLogistic,classifiersname = LogisticRegression.getLogisticRegressionPrediction(X_train, y_train, X_train,featuresname,classifiersname)
+predictedAdaboostTrain,classifierAdaboost,classifiersname = Adaboost.getAdaboostPrediction(X_train, y_train, X_train,featuresname,classifiersname)
 
 
-#Perform Cross Validation
-resultsTrainingSet = []
-resultsTestSet = []
-for i in range(cross_validation_folds):
-    test_IDs = cross_validation_chunks[i]
-    train_IDs = [x for x in r if x not in test_IDs]
-    train_data_cross = train_data[train_IDs, :]
-    test_data_cross = train_data[test_IDs, :]
-    classifier = classifier.fit(train_data_cross[:,1:],train_data_cross[:,0])
-    resultsTrainingSet.append(classifier.score(train_data_cross[:, 1:], train_data_cross[:, 0]))
-    resultsTestSet.append(classifier.score(test_data_cross[:, 1:], test_data_cross[:, 0]))
 
-print np.array(resultsTrainingSet).mean()
-print np.array(resultsTestSet).mean()
+X_2ndpass_train = np.array((predictedForestTrain,
+                     predictedTreeTrain,
+                     predictedExtraTrain,
+                     predictedGradientTrain,
+                     predictedLogisticTrain,
+                     predictedAdaboostTrain)
+                     )
+X_2ndpass_train = X_2ndpass_train.transpose()
+
+X_2ndpass_test = np.array((classifierForest.predict(X_test),
+                            classifierTree.predict(X_test),
+                            classifierExtra.predict(X_test),
+                            classifierGradient.predict(X_test),
+                            classifierLogistic.predict(X_test),
+                            classifierAdaboost.predict(X_test))
+                     )
+                     
+X_2ndpass_test = X_2ndpass_test.transpose()
+
+secondpassclassifiersname = []
+
+predicted,classifierfinal,secondpassclassifiersname = DecisionTree.getDecisionTreePrediction(X_2ndpass_train, y_train, X_2ndpass_test,classifiersname,secondpassclassifiersname,"finalTree")
 
 
-classifier = classifier.fit(train_data[:, 1::], train_data[:,0])
-predicted = classifier.predict(test_data_NoID)
+
+
 IDs = test_data[:, 0]
 
 result = np.column_stack((IDs, predicted)).astype(int)
@@ -72,6 +83,7 @@ result = np.column_stack((IDs, predicted)).astype(int)
 #learningCurve.drawLearningCurve(train_data[:, 1::], train_data[:,0])
 
 np.savetxt('predicted.csv', result, fmt='%i', comments='', header='PassengerId,Survived', delimiter=',')
+print "File written"
 
 """
 dot_data = StringIO.StringIO()
