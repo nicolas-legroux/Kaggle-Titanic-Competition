@@ -1,9 +1,10 @@
 from sklearn.ensemble import RandomForestClassifier
 import crossvalidation
+import numpy as np
 
 
-def getRandomForestPrediction(X_train, y_train, X_test, featuresname,classifiersname):
-    classifier = RandomForestClassifier(n_estimators=2, min_samples_leaf = 25)
+def getRandomForestPrediction(X_train, y_train, X_test, classifierNames=[], printResult=False, test_IDs=[]):
+    classifier = RandomForestClassifier(n_estimators=1000, min_samples_leaf = 25)
     #Perform cross validation
     
     print "\n********* START RANDOM FOREST *********"
@@ -12,7 +13,15 @@ def getRandomForestPrediction(X_train, y_train, X_test, featuresname,classifiers
     print "Score on Test Set : " , errortest
     print "********* END RANDOM FOREST *********\n"
     
-    classifiersname = classifiersname + ["RandomForest"]
+    classifierNames = classifierNames + ["RandomForest"]
     
     classifier.fit(X_train, y_train)
-    return classifier.predict(X_test),classifier,classifiersname
+    
+    predicted = classifier.predict(X_test)
+
+    if printResult:    
+        result = np.column_stack((test_IDs, predicted)).astype(int)
+        np.savetxt('predictedRandomForest.csv', result, fmt='%i', comments='', header='PassengerId,Survived', delimiter=',')
+        print "File written for Random Forest."
+      
+    return predicted, classifier, classifierNames

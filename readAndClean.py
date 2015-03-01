@@ -237,14 +237,12 @@ def getData(onlyBinary=False):
     #Drop columns which are not numbers    
     data = data.drop(["Cabin", "Name", "Ticket"], axis=1)
     
-    #Re-order the labels    
-    labels=['PassengerId', 'Survived', 'Sex', 'Pclass', 'Class_1', 'Class_2', 'Class_3', 'Title', 'Title_Mrs', 'Title_Miss', 'Title_Master', 
-    'Title_Mr', 'Age', 'AgeIsNull', 'Deck', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F', 
-    'Deck_G', 'Deck_Z', 'TicketNumber', 'TravellingAlone', 'Fare', 'Surname', 'GroupID', 'Parch', 'SibSp', 'GroupCount', 'FamilySize',
-    'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival', 'Embarked', 'Embarked_C', 'Embarked_Q', 'Embarked_S']
+    #Re-order the labels   
     
-    labels_not_boolean = ['Pclass', 'Title', 'Age', 'Deck', 'TicketNumber', 'Fare', 'Surname', 'GroupID', 'Parch', 'SibSp',
-                          'GroupCount', 'FamilySize', 'Embarked']
+    labels=['PassengerId', 'Survived', 'Title_Mr', 'Title_Miss', 'Title_Mrs', 'Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F',
+            'Deck_G', 'Deck_Z', 'TicketNumber', 'Pclass', 'GroupCount', 'FamilySize', 'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival']
+    
+    labels_not_boolean = ['Pclass', 'Age', 'TicketNumber', 'GroupCount', 'FamilySize']
     
     data = data[labels]
     
