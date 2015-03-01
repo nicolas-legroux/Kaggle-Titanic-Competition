@@ -25,7 +25,7 @@ import learningCurve
 random.seed()
 
 #Choose a classifie
-classifier = RandomForestClassifier(n_estimators=9000, min_samples_leaf = 25)
+classifier = RandomForestClassifier(n_estimators=1000, min_samples_leaf = 25)
 
 #Get Data
 train_data, test_data, labels, data = readAndClean.getData()
@@ -44,7 +44,7 @@ num = float(len(r))/cross_validation_folds
 cross_validation_chunks = [ r [i:i + int(num)] for i in range(0, (cross_validation_folds -1)*int(num), int(num))]
 cross_validation_chunks.append(r[(cross_validation_folds -1)*int(num):])
 
-"""
+
 #Perform Cross Validation
 resultsTrainingSet = []
 resultsTestSet = []
@@ -59,7 +59,7 @@ for i in range(cross_validation_folds):
 
 print np.array(resultsTrainingSet).mean()
 print np.array(resultsTestSet).mean()
-"""
+
 
 classifier = classifier.fit(train_data[:, 1::], train_data[:,0])
 predicted = classifier.predict(test_data_NoID)
