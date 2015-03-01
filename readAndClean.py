@@ -147,6 +147,9 @@ def getData(onlyBinary=False):
     #Compute family size
     data['FamilySize'] = data['SibSp'] + data['Parch'] + 1
     
+    #Compute fare per person
+    data['FarePerPerson'] = data['Fare'] / data['FamilySize'].map(float)
+    
     #Drop surname when person has no family
     data.loc[(data.FamilySize == 0), "Surname"] = "Single"
     #Set surname = concat(family size, surname) [To avoid mixing families with same surname but different family sizes]
@@ -239,10 +242,13 @@ def getData(onlyBinary=False):
     
     #Re-order the labels   
     
-    labels=['PassengerId', 'Survived', 'Title_Mr', 'Title_Miss', 'Title_Mrs', 'Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F',
-            'Deck_G', 'Deck_Z', 'TicketNumber', 'Pclass', 'GroupCount', 'FamilySize', 'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival']
+    #labels=['PassengerId', 'Survived', 'Title_Mr', 'Title_Miss', 'Title_Mrs', 'Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F',
+    #        'Deck_G', 'Deck_Z', 'TicketNumber', 'Pclass', 'GroupCount', 'FamilySize', 'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival']
     
-    labels_not_boolean = ['Pclass', 'Age', 'TicketNumber', 'GroupCount', 'FamilySize']
+    labels=['PassengerId', 'Survived', 'Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F',
+    'Deck_G', 'Deck_Z', 'Deck', 'TicketNumber', 'Pclass', 'GroupCount', 'FamilySize', 'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival','Title_Mr', 'Title_Miss', 'Title_Mrs', 'FarePerPerson']
+
+    labels_not_boolean = ['Pclass', 'Age', 'TicketNumber', 'GroupCount', 'FamilySize', 'FarePerPerson']
     
     data = data[labels]
     

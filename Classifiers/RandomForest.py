@@ -4,7 +4,7 @@ import numpy as np
 
 
 def getRandomForestPrediction(X_train, y_train, X_test, classifierNames=[], printResult=False, test_IDs=[]):
-    classifier = RandomForestClassifier(n_estimators=1000, min_samples_leaf = 25)
+    classifier = RandomForestClassifier(n_estimators=2228, min_samples_split = 7, min_samples_leaf=2, criterion='entropy', max_features=6)
     #Perform cross validation
     
     print "\n********* START RANDOM FOREST *********"

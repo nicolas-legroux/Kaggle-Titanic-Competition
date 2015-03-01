@@ -13,7 +13,7 @@ from Classifiers import ExtraTrees
 from Classifiers import GradientBoost
 from Classifiers import LogisticRegression
 from Classifiers import RandomForest
-
+import parametersOptimisation
 #Get Data
 train_data, test_data, featureNames, data = readAndClean.getData()
 
@@ -26,6 +26,8 @@ X_test = np.array(test_data[:, 1:])
 
 X_train = train_data[:, 1::]
 y_train = train_data[:, 0]
+
+#parametersOptimisation.fitParameters(X_train,y_train)
 
 featureNames = featureNames[2:]
 
