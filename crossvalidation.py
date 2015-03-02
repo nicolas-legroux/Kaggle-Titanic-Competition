@@ -3,9 +3,7 @@ import random
 import numpy as np
 import readAndClean
 
-
-
-def crossValidation(X,y,classifier):
+def crossValidation(X,y,classifier, usingPandas=True):
     #Perform Cross Validation
     #Set Cross Validation parameters
     random.seed()
@@ -27,25 +25,31 @@ def crossValidation(X,y,classifier):
         print "   Done with Pass " + str(i)
         test_idx = cross_validation_chunks[i]
         train_idx = [x for x in r if x not in test_idx]
-        train_data_cross = X.ix[train_idx, :]
-        test_data_cross = X.ix[test_idx, :]
         
-              
+        train_data_cross = None
+        test_data_cross = None
         
         y_train = y[train_idx]
         y_test = y[test_idx]
         
-        test_data_cross, featuresname = readAndClean.keepLabels(readAndClean.computeSecondaryFeatures(test_data_cross, train_data_cross, True))
-        train_data_cross, featuresname = readAndClean.keepLabels(readAndClean.computeSecondaryFeatures(train_data_cross, train_data_cross, False))
-
-        test_data_cross = test_data_cross.values
-        train_data_cross = train_data_cross.values
-        
-         
+        if usingPandas:            
+            train_data_cross = X.ix[train_idx, :]
+            test_data_cross = X.ix[test_idx, :] 
+            
+            train_data_cross, test_data_cross = readAndClean.computeSecondaryFeatures(train_data_cross, test_data_cross)
+            
+            test_data_cross, featuresname = readAndClean.keepLabels(test_data_cross)
+            train_data_cross, featuresname = readAndClean.keepLabels(train_data_cross)
+    
+            test_data_cross = test_data_cross.values
+            train_data_cross = train_data_cross.values 
+        else:
+            train_data_cross = X[train_idx, :]
+            test_data_cross = X[test_idx, :]
         
         classifier = classifier.fit(train_data_cross, y_train)
         resultsTrainingSet.append(classifier.score(train_data_cross, y_train))
         resultsTestSet.append(classifier.score(test_data_cross, y_test))
-        
+    
     print "Done with Cross-Validation"
     return np.array(resultsTrainingSet).mean(), np.array(resultsTestSet).mean()

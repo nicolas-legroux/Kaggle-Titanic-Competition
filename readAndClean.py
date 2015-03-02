@@ -4,9 +4,10 @@ import pandas as pd
 import numpy as np
 import re
 
-def getGroupID(room, dict):    
-    if dict[room] > 1:
-        return room
+#dict maps a ticket to the number of people with the same ticket
+def getGroupID(ticket, dict):    
+    if dict[ticket] > 1:
+        return ticket
     else:    
         return 0
         
@@ -91,7 +92,8 @@ def getData():
     #  ['Mr' 'Mrs' 'Miss' 'Master' 'Don' 'Rev' 'Dr' 'Mme' 'Ms' 'Major' 'Lady'
     # 'Sir' 'Mlle' 'Col' 'Capt' 'the' 'Jonkheer' 'Dona']
     # "the" is actually "the Countess"
-    """       
+    """  
+     
     data["Title"] = data["Title"].replace(["Mme", "the", "Dona", "Lady"], "Mrs")
     data["Title"] = data["Title"].replace(["Ms", "Mlle"], "Miss")
     data.loc[(data.Sex == 0) & (data.Title == "Dr"), "Title" ] = "Mrs"
@@ -181,14 +183,15 @@ def getData():
     #Create groups (ie People with same ticket number --> not necessarily in the same family !)
     data["GroupID"] = data["TicketNumber"]
     counts = data["TicketNumber"].value_counts()
-    nroom = dict(counts)
-       
+    #ticketMap is a map : ticketNumber -> number of people with that ticket number
+    ticketMap = dict(counts)
+           
     # Create feature 'how many people with same ticket number'
-    data['GroupCount'] = data['TicketNumber'].map(nroom)
+    data['GroupCount'] = data['TicketNumber'].map(ticketMap)
     data.loc[ (data.TicketNumber == 0), 'GroupCount'] = 1 #For the passengers alone in a group
     
     #Create Group IDs
-    data["GroupID"] = data["TicketNumber"].apply(lambda room: getGroupID(room, nroom)).astype(int)    
+    data["GroupID"] = data["TicketNumber"].apply(lambda room: getGroupID(room, ticketMap))   
     data.GroupID = pd.factorize(data.GroupID)[0]
     
     # -----------------------------------------
@@ -198,14 +201,11 @@ def getData():
     data['TravellingAlone'] = 1
     data.loc[((data.GroupCount>1) | (data.FamilySize>1)), 'TravellingAlone'] = 0
     
-
     # -------------------------------------------------
-    
     
     #Drop columns which are not numbers    
     data = data.drop(["Cabin", "Name", "Ticket"], axis=1)
-    
-       
+           
     #Divide into train and test data
     data_train = data[data.Survived.notnull()].astype(int)
     data_test = data[data.Survived.isnull()]
@@ -223,22 +223,15 @@ def getData():
 
 data_train, survived, data_test, IDS = getData()
 
-
-
-def computeSecondaryFeatures(data_test, data_train, isTest):
-        # -----------------------------------------
-    
+def computeSecondaryFeatures(data_train, data_test):
+       
     #Create 2 features to know, for each person :
     # 1. Whether, in the same Family or Group, a Female or Child Died ('should have survived but died')
     # 2. Whether, in the same Family or Group, a Man survived ('should have died but survived')
     # This allows us to identify outliers.
     
-    data_test = data_test.drop('Survived', axis=1).astype(int)  
-    
-    if(isTest):
-        data = data_train.append(data_test)
-    else:
-        data = data_train
+    data_test = data_test.drop('Survived', axis=1)    
+    data = data_train.append(data_test)
     
     shouldHaveSurvivedButDiedGroupID = pd.Series(data[(((data.Sex == 0) & (data.Survived == 0)) | ((data.Title == 2) & (data.Survived == 0) & (data.Age<15))) & ((data.GroupCount>1) | (data.FamilySize>1))]["GroupID"]).unique()
     # GroupID = 0 means the person has no Group, therefore remove 0
@@ -268,38 +261,31 @@ def computeSecondaryFeatures(data_test, data_train, isTest):
     data.loc[(data.hasFamilyThatShouldHaveDied == 1) | (data.hasFriendThatShouldHaveDied == 1), "inGroupWithOutlierSurvival"] = 1
     
     data = data.drop(["hasFamilyThatShouldHaveSurvived", "hasFriendThatShouldHaveSurvived", "hasFamilyThatShouldHaveDied", "hasFriendThatShouldHaveDied"], axis=1)
-     
-        
-    
-    
+         
     data_train = data[data.Survived.notnull()].astype(int)
     data_test = data[data.Survived.isnull()]  
     
     data_test = data_test.drop('Survived', axis=1).astype(int)  
-    data_train = data_train.drop('Survived', axis=1).astype(int)  
-        
-    if(isTest):
-        return data_test
-    else:
-        return data_train
+    data_train = data_train.drop('Survived', axis=1).astype(int)
+            
+    return data_train, data_test
       
 def keepLabels(data, onlyBinary=False):
-     #Re-order the labels   
+    #Re-order the labels   
     
-    #labels=['PassengerId', 'Survived', 'Title_Mr', 'Title_Miss', 'Title_Mrs', 'Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F',
-    #        'Deck_G', 'Deck_Z', 'TicketNumber', 'Pclass', 'GroupCount', 'FamilySize', 'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival']
-    
-    labels = ['Title_Master', 'Age', 'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F',
-    'Deck_G', 'Deck_Z', 'Deck', 'TicketNumber', 'Pclass', 'GroupCount', 'FamilySize', 'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival',
-    'Title_Mr', 'Title_Miss', 'Title_Mrs', 'FarePerPerson', 'Class_1', 'Class_2', 'Class_3']
-
+    labels=['Title_Mr', 'Title_Miss', 'Title_Mrs', 'Title_Master', 'Age', 'Class_1', 'Class_2', 'Class_3',
+            'Deck_A', 'Deck_B', 'Deck_C', 'Deck_D', 'Deck_E', 'Deck_F', 'Deck_G', 'Deck_Z', 
+            'Surname', 'GroupID', 'GroupCount', 'FamilySize', 'Embarked_S', 'Embarked_C', 'Embarked_Q',
+            'FarePerPerson', 'TravellingAlone', 'inGroupWithOutlierDeath', 'inGroupWithOutlierSurvival']
+  
     labels_not_boolean = ['Pclass', 'Age', 'TicketNumber', 'GroupCount', 'FamilySize', 'FarePerPerson', 'Deck']
     
     data = data[labels]
     
-    if(onlyBinary):        
-        data = data.drop(labels_not_boolean, axis=1)
-        labels = labels_not_boolean
+    if(onlyBinary):      
+        labels_copy = [label for label in labels if label not in labels_not_boolean]
+        labels = labels_copy
+        data=data[labels]
         
     return data, labels
     
